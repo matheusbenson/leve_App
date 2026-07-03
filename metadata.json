@@ -1,0 +1,8 @@
+{
+  "name": "Leve - Controle de Calorias, Água e Peso",
+  "description": "Aplicativo de saúde para controle diário de calorias, consumo de água, peso e plano de reeducação alimentar integrado com Inteligência Artificial para a Google Play Store.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
