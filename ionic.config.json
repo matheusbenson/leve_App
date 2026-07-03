@@ -1,0 +1,7 @@
+{
+  "name": "Leve",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
