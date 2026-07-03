@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Flame, Droplets, Scale, Trash2, Plus, Sparkles, PlusCircle, ArrowRight, Lightbulb } from "lucide-react";
+import { Flame, Droplets, Scale, Trash2, Plus, PlusCircle, ArrowRight, Lightbulb } from "lucide-react";
 import { FoodEntry, UserConfig } from "../types";
 
 interface TodayTabProps {
@@ -15,6 +15,25 @@ interface TodayTabProps {
   onTabChange: (tab: string) => void;
 }
 
+const HEALTH_TIPS = [
+  "Beba água! Beber 1 copo de água a cada 2 horas ajuda a manter o metabolismo ativo. 💧",
+  "Planeje suas refeições com antecedência para evitar opções ultraprocessadas na hora da fome. 🍎",
+  "As fibras do pão integral prolongam a sensação de saciedade e ajudam a controlar os picos de insulina. 🍞",
+  "Dormir de 7 a 8 horas por noite regula os hormônios da fome (grelina e leptina) e facilita a queima de gordura. 😴",
+  "Substituir o açúcar refinado por frutas picadas em iogurtes ajuda a diminuir os desejos por doces de forma natural. 🍓",
+  "Consumir uma fonte de proteína magra no café da manhã ajuda a controlar o apetite ao longo do dia. 🍳",
+  "Mastigar devagar dá tempo para que os hormônios da saciedade cheguem ao cérebro (cerca de 20 minutos). 🕒",
+  "Evite distrações como celular ou TV enquanto come para ter mais consciência da porção consumida. 📱",
+  "Adicionar sementes de chia ou linhaça nas frutas ajuda a reduzir a velocidade de absorção da glicose. 🌾",
+  "O chá verde e o gengibre possuem propriedades termogênicas leves que auxiliam o metabolismo. 🍵",
+  "Fazer pequenos intervalos para alongar ou caminhar durante o dia melhora a circulação e queima calorias passivas. 🚶",
+  "Prefira temperos naturais como alho, cebola, orégano e limão para reduzir o consumo de sódio e inchaço. 🌿",
+  "O consumo de gorduras boas (como abacate, nozes e azeite) é essencial para a regulação hormonal saudável. 🥑",
+  "Evite calorias líquidas: sucos coados e refrigerantes têm rápida absorção e dão pouca saciedade. 🥤",
+  "Foque em consistência, não em perfeição. Um deslize em uma refeição não anula todo o seu esforço semanal! ✨",
+  "O ovo é uma fonte de proteína completa e barata, excelente para manutenção de massa muscular magra. 🥚"
+];
+
 export default function TodayTab({
   foods,
   water,
@@ -27,30 +46,19 @@ export default function TodayTab({
   onAddWater,
   onTabChange
 }: TodayTabProps) {
-  const [iaInput, setIaInput] = useState("");
-  const [iaCategory, setIaCategory] = useState("Café da manhã");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [healthTip, setHealthTip] = useState("Beba água! Beber 1 copo de água a cada 2 horas ajuda a manter o metabolismo ativo.");
-  const [loadingTip, setLoadingTip] = useState(false);
+  const [quickName, setQuickName] = useState("");
+  const [quickKcal, setQuickKcal] = useState("");
+  const [quickCategory, setQuickCategory] = useState("Café da manhã");
+  const [healthTip, setHealthTip] = useState("");
 
-  // Buscar dica de saúde por IA
-  const fetchHealthTip = async () => {
-    setLoadingTip(true);
-    try {
-      const res = await fetch("/api/gemini/health-tip");
-      const data = await res.json();
-      if (data.tip) {
-        setHealthTip(data.tip);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingTip(false);
-    }
+  // Sortear uma dica no carregamento e no botão
+  const pickRandomTip = () => {
+    const randomTip = HEALTH_TIPS[Math.floor(Math.random() * HEALTH_TIPS.length)];
+    setHealthTip(randomTip);
   };
 
   useEffect(() => {
-    fetchHealthTip();
+    pickRandomTip();
   }, []);
 
   const totalKcal = foods.reduce((sum, f) => sum + f.kcal, 0);
@@ -62,53 +70,37 @@ export default function TodayTab({
 
   const waterPercent = Math.min(water / waterGoal, 1);
 
-  const handleIaAdd = async (e: React.FormEvent) => {
+  const handleQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!iaInput.trim()) return;
+    if (!quickName.trim() || !quickKcal) return;
 
-    setIsProcessing(true);
-    try {
-      const res = await fetch("/api/gemini/analyze-food", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: iaInput, category: iaCategory })
-      });
-      const data = await res.json();
-      if (data.foods && Array.isArray(data.foods)) {
-        data.foods.forEach((food: { name: string; kcal: number }) => {
-          onAddFood(food.name, food.kcal, iaCategory);
-        });
-        setIaInput("");
-      } else {
-        alert("Não foi possível analisar os alimentos. Tente listar de forma mais simples.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao conectar com o serviço de IA. Verifique sua conexão.");
-    } finally {
-      setIsProcessing(false);
+    const kcalNum = parseInt(quickKcal);
+    if (!isNaN(kcalNum) && kcalNum >= 0) {
+      onAddFood(quickName.trim(), kcalNum, quickCategory);
+      setQuickName("");
+      setQuickKcal("");
+      alert("Alimento registrado com sucesso!");
     }
   };
 
   return (
     <div className="flex-1 flex flex-col gap-4 overflow-y-auto px-4 pb-20 pt-2 select-none">
       
-      {/* Banner de Dica de Saúde com IA */}
+      {/* Banner de Dica de Saúde Offline */}
       <div className="bg-indigo-50/70 rounded-[24px] p-4 border border-indigo-100/50 flex gap-3 items-start relative overflow-hidden shadow-sm">
         <div className="p-2 bg-primary text-white rounded-[14px] shadow-sm shrink-0">
           <Lightbulb className="w-4 h-4" />
         </div>
-        <div className="flex-1">
-          <span className="text-[10px] uppercase font-extrabold text-primary tracking-wider block">Dica Inteligente do Dr. Leve</span>
-          <p className="text-xs text-textmain font-medium leading-relaxed mt-0.5">{healthTip}</p>
+        <div className="flex-1 pr-6">
+          <span className="text-[10px] uppercase font-extrabold text-primary tracking-wider block">Dica de Saúde do Dr. Leve</span>
+          <p className="text-xs text-textmain font-semibold leading-relaxed mt-0.5">{healthTip}</p>
         </div>
         <button 
-          onClick={fetchHealthTip}
-          disabled={loadingTip}
-          className="absolute right-2 top-2 p-1 hover:bg-indigo-100 rounded-lg text-primary transition-colors"
+          onClick={pickRandomTip}
+          className="absolute right-3 top-3.5 p-1 hover:bg-indigo-100 rounded-lg text-primary transition-colors cursor-pointer"
           title="Nova dica"
         >
-          <RefreshIcon className={`w-3 h-3 ${loadingTip ? "animate-spin" : ""}`} />
+          <RefreshIcon className="w-3.5 h-3.5" />
         </button>
       </div>
 
@@ -163,43 +155,62 @@ export default function TodayTab({
         </div>
       </div>
 
-      {/* Caixa de Entrada Inteligente IA */}
+      {/* Seção de Adição Rápida de Alimentos */}
       <div className="bg-white rounded-[24px] p-5 shadow-sm border border-neutral-100/80 flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-extrabold text-textmuted uppercase tracking-wider">Adicionar com Inteligência Artificial</h3>
-          <span className="inline-flex items-center gap-1 text-[9px] bg-primary/15 text-primary font-extrabold px-2.5 py-1 rounded-full border border-primary/10">
-            <Sparkles className="w-2.5 h-2.5 animate-pulse" /> Gemini AI
+          <h3 className="text-[10px] font-extrabold text-textmuted uppercase tracking-wider">Adicionar Alimento no Diário</h3>
+          <span className="inline-flex items-center gap-1 text-[9px] bg-indigo-50 text-indigo-700 font-extrabold px-2.5 py-1 rounded-full border border-indigo-100/50">
+            Adicionar Rápido
           </span>
         </div>
         
-        <form onSubmit={handleIaAdd} className="flex flex-col gap-2">
+        <form onSubmit={handleQuickAdd} className="flex flex-col gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[8px] font-extrabold text-textmuted uppercase tracking-wider mb-1">Nome do Alimento</label>
+              <input 
+                type="text" 
+                value={quickName} 
+                onChange={(e) => setQuickName(e.target.value)} 
+                placeholder="Ex: Omelete, Pão, Arroz"
+                className="w-full text-xs p-2.5 bg-brandbg border border-neutral-200/80 rounded-xl focus:outline-none focus:border-primary text-textmain font-medium placeholder:text-neutral-400"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[8px] font-extrabold text-textmuted uppercase tracking-wider mb-1">Calorias (kcal)</label>
+              <input 
+                type="number" 
+                value={quickKcal} 
+                onChange={(e) => setQuickKcal(e.target.value)} 
+                placeholder="Ex: 140"
+                className="w-full text-xs p-2.5 bg-brandbg border border-neutral-200/80 rounded-xl focus:outline-none focus:border-primary text-textmain font-bold placeholder:text-neutral-400"
+                required
+                min="0"
+              />
+            </div>
+          </div>
+
           <div className="flex gap-2">
-            <select 
-              value={iaCategory} 
-              onChange={(e) => setIaCategory(e.target.value)} 
-              className="text-xs p-2.5 bg-brandbg border border-neutral-200/80 rounded-xl focus:outline-none focus:border-primary text-textmain font-bold"
-            >
-              <option value="Café da manhã">Manhã</option>
-              <option value="Almoço">Almoço</option>
-              <option value="Lanche">Lanche</option>
-              <option value="Jantar">Jantar</option>
-            </select>
-            <input 
-              type="text" 
-              value={iaInput} 
-              onChange={(e) => setIaInput(e.target.value)} 
-              placeholder="Ex: comi 2 ovos, pão de queijo e café"
-              className="flex-1 text-xs p-2.5 bg-brandbg border border-neutral-200/80 rounded-xl focus:outline-none focus:border-primary text-textmain font-medium placeholder:text-neutral-400"
-            />
+            <div className="flex-1">
+              <select 
+                value={quickCategory} 
+                onChange={(e) => setQuickCategory(e.target.value)} 
+                className="w-full text-xs p-2.5 bg-brandbg border border-neutral-200/80 rounded-xl focus:outline-none focus:border-primary text-textmain font-bold"
+              >
+                <option value="Café da manhã">Café da Manhã</option>
+                <option value="Almoço">Almoço</option>
+                <option value="Lanche">Lanche</option>
+                <option value="Jantar">Jantar</option>
+              </select>
+            </div>
             <button 
               type="submit" 
-              disabled={isProcessing || !iaInput.trim()}
-              className="p-2.5 bg-primary hover:bg-primary/90 disabled:bg-neutral-100 text-white disabled:text-neutral-400 rounded-xl transition-all font-semibold shrink-0 shadow-sm"
+              className="px-5 bg-primary hover:bg-primary/95 text-white rounded-xl transition-all font-extrabold text-xs flex items-center justify-center gap-1 shrink-0 shadow-md shadow-primary/15 cursor-pointer"
             >
-              {isProcessing ? "Lendo..." : <Plus className="w-4 h-4" />}
+              <Plus className="w-4 h-4" /> Registrar
             </button>
           </div>
-          <p className="text-[9px] text-textmuted leading-relaxed font-medium italic">Digite o que comeu. O Gemini AI estimará as porções e calorias de forma automática.</p>
         </form>
       </div>
 
@@ -290,7 +301,7 @@ export default function TodayTab({
           </div>
         ) : (
           <div className="text-center py-8 text-textmuted text-xs font-semibold leading-relaxed">
-            Nenhum alimento adicionado hoje.<br />Use o campo de Inteligência Artificial acima ou consulte o Cardápio!
+            Nenhum alimento adicionado hoje.<br />Use o campo de Adição Rápida acima ou consulte o Cardápio!
           </div>
         )}
       </div>
