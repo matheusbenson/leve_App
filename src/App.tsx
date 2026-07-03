@@ -254,7 +254,7 @@ export default function App() {
             <h1 className="text-lg font-bold font-sans tracking-tight text-white flex items-center gap-2">
               Leve <span className="text-xs bg-green-900/60 text-green-400 font-bold px-2 py-0.5 rounded-full border border-green-800/40">App Android de Saúde</span>
             </h1>
-            <p className="text-xs text-neutral-400">Desenvolvido com Capacitor, React e Inteligência Artificial do Google Gemini</p>
+            <p className="text-xs text-neutral-400">Desenvolvido de forma nativa e leve com Capacitor e React</p>
           </div>
         </div>
 

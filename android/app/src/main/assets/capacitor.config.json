@@ -1,0 +1,8 @@
+{
+	"appId": "com.leve.app",
+	"appName": "Leve",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
+}
